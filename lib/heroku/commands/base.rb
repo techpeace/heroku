@@ -4,7 +4,6 @@ require 'git'
 module Heroku::Command
 	class Base
       DEFAULT_HEROKU_REMOTE_NAME = "heroku"
-
 		attr_accessor :args
 		attr_reader :autodetected_app
 		def initialize(args, heroku=nil)
@@ -38,22 +37,21 @@ module Heroku::Command
 			@heroku ||= Heroku::Command.run_internal('auth:client', args)
 		end
 
-        # switches which heroku app to use
-        # TODO deal with multiple heroku remotes, make sure to remove them.
+        # switches which heroku app to use (sets it as the default)
         def switch
           unless @args.size > 0
             raise(CommandFailed, "Need to specify heroku app to switch to")
           end
 
           git_repo = ::Git.open(Dir.pwd)
-          remote_hash = Hash.new
-          git_repo.remotes.each {|remote| remote_hash[remote.name] = remote }
-          if remote_hash.keys.include?(DEFAULT_HEROKU_REMOTE_NAME)
-            begin
-              remote_hash[DEFAULT_HEROKU_REMOTE_NAME].remove
-              # remove command isn't working for ruby-git 1.2.5
-            rescue Git::GitExecuteError
-              shell("git remote rm #{DEFAULT_HEROKU_REMOTE_NAME}")
+          git_repo.remotes.each do |remote|
+            if remote.url.split(':').first == default_git_remote_host
+              begin
+                remote.remove
+                # remove command isn't working for ruby-git 1.2.5
+              rescue Git::GitExecuteError
+                shell("git remote rm #{remote.name}")
+              end
             end
           end
 
@@ -149,7 +147,11 @@ module Heroku::Command
 		end
 
         def default_git_remote_path(name)
-          "git@#{heroku.host}:#{name}.git"
+          "#{default_git_remote_host}:#{name}.git"
+        end
+
+        def default_git_remote_host
+          "git@#{heroku.host}"
         end
 	end
 

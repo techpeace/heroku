@@ -119,22 +119,37 @@ module Heroku::Command
             Git.stub!(:open).and_return(@git)
           end
 
-          context "removing existing heroku remote" do
+          context "removing existing heroku remotes" do
             before(:each) do
-              @remote = mock('remote', :name => "heroku")
-              @git.stub!(:remotes).and_return([@remote])
+              @heroku_remotes = [
+                mock('remote_heroku', :name => "heroku", :url => 'git@heroku.com:heroku.git'),
+                mock('remote_staging', :name => "staging", :url => 'git@heroku.com:staging.git'),
+                mock('remote_production', :name => 'production', :url => 'git@heroku.com:production.git')
+              ]
+              @heroku_remotes.each {|remote| remote.stub!(:remove) }
+              @non_heroku_remotes = [
+                mock('origin', :name => 'origin', :url => 'git@github.com:heroku.git')
+              ]
+              @git.stub!(:remotes).and_return(@heroku_remotes + @non_heroku_remotes)
             end
 
-            it "should remove the heroku remote if it exists" do
-              @remote.should_receive(:remove)
+            it "should not remove the non heroku remotes" do
+              @non_heroku_remotes.each {|remote| remote.should_not_receive(:remove) }
+
+              @base.switch
+            end
+
+            it "should remove the heroku remotes" do
+              @heroku_remotes.each {|remote| remote.should_receive(:remove) }
 
               @base.switch
             end
 
             it "should handle Git::Remote.remove being broken in ruby-git 1.2.5" do
-              @remote.stub!(:remove).and_raise(Git::GitExecuteError)
-
-              @base.should_receive(:shell).with('git remote rm heroku')
+              @heroku_remotes.each do |remote| 
+                remote.stub!(:remove).and_raise(Git::GitExecuteError)
+                @base.should_receive(:shell).with("git remote rm #{remote.name}")
+              end
 
               @base.switch
             end
