@@ -50,8 +50,12 @@ module Heroku::Command
           remote_hash = Hash.new
           git_repo.remotes.each {|remote| remote_hash[remote.name] = remote }
           if remote_hash.keys.include?(DEFAULT_HEROKU_REMOTE_NAME)
-            # remove command isn't working for ruby-git 1.2.5
-            remote_hash[DEFAULT_HEROKU_REMOTE_NAME].remove
+            begin
+              remote_hash[DEFAULT_HEROKU_REMOTE_NAME].remove
+              # remove command isn't working for ruby-git 1.2.5
+            rescue Git::GitExecuteError
+              shell("git remote rm #{DEFAULT_HEROKU_REMOTE_NAME}")
+            end
           end
 
           remote_location = HEROKU_GIT_URL.sub("PROJECT_NAME", "#{@args.first}")

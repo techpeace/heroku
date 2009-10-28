@@ -120,11 +120,21 @@ module Heroku::Command
           end
 
           context "removing existing heroku remote" do
-            it "should remove the heroku remote if it exists" do
-              remote = mock('remote', :name => "heroku")
-              @git.stub!(:remotes).and_return([remote])
+            before(:each) do
+              @remote = mock('remote', :name => "heroku")
+              @git.stub!(:remotes).and_return([@remote])
+            end
 
-              remote.should_receive(:remove)
+            it "should remove the heroku remote if it exists" do
+              @remote.should_receive(:remove)
+
+              @base.switch
+            end
+
+            it "should handle Git::Remote.remove being broken in ruby-git 1.2.5" do
+              @remote.stub!(:remove).and_raise(Git::GitExecuteError)
+
+              @base.should_receive(:shell).with('git remote rm heroku')
 
               @base.switch
             end
