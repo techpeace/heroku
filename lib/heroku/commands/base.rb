@@ -1,7 +1,11 @@
 require 'fileutils'
+require 'git'
 
 module Heroku::Command
 	class Base
+      DEFAULT_HEROKU_REMOTE_NAME = "heroku"
+      HEROKU_GIT_URL = "git@heroku.com:PROJECT_NAME.git"
+
 		attr_accessor :args
 		attr_reader :autodetected_app
 		def initialize(args, heroku=nil)
@@ -34,6 +38,25 @@ module Heroku::Command
 		def heroku
 			@heroku ||= Heroku::Command.run_internal('auth:client', args)
 		end
+
+        # switches which heroku app to use
+        # TODO deal with multiple heroku remotes, make sure to remove them.
+        def switch
+          unless @args.size > 0
+            raise(CommandFailed, "Need to specify heroku app to switch to")
+          end
+
+          git_repo = ::Git.open(Dir.pwd)
+          remote_hash = Hash.new
+          git_repo.remotes.each {|remote| remote_hash[remote.name] = remote }
+          if remote_hash.keys.include?(DEFAULT_HEROKU_REMOTE_NAME)
+            # remove command isn't working for ruby-git 1.2.5
+            remote_hash[DEFAULT_HEROKU_REMOTE_NAME].remove
+          end
+
+          remote_location = HEROKU_GIT_URL.sub("PROJECT_NAME", "#{@args.first}")
+          git_repo.add_remote(DEFAULT_HEROKU_REMOTE_NAME, remote_location)
+        end
 
 		def extract_app(force=true)
 			app = extract_option('--app')

@@ -110,5 +110,39 @@ module Heroku::Command
 				@base.app_urls('test').should == "http://test.example.com/ | git@example.com:test.git"
 			end
 		end
+
+        context "switch" do
+          before(:each) do
+            @git = mock('Git')
+            @git.stub!(:remove)
+            @git.stub!(:add_remote)
+            Git.stub!(:open).and_return(@git)
+          end
+
+          context "removing existing heroku remote" do
+            it "should remove the heroku remote if it exists" do
+              remote = mock('remote', :name => "heroku")
+              @git.stub!(:remotes).and_return([remote])
+
+              remote.should_receive(:remove)
+
+              @base.switch
+            end
+          end
+
+          context "adding new heroku remote" do
+            before(:each) do
+              @args = ['foo']
+              @base = Base.new(@args)
+            end
+
+            it "should have the name 'heroku' and location" do
+              @git.stub!(:remotes).and_return([])
+              @git.should_receive(:add_remote).with('heroku', 'git@heroku.com:foo.git')
+
+              @base.switch
+            end
+          end
+        end
 	end
 end
