@@ -26,6 +26,7 @@ module Heroku::Command
  open                         # open the app in a web browser
  rename <newname>             # rename the app
  dynos <qty>                  # set the app to use the specified qty of dynos
+ switch <appname>             # run commands against the specified app by default
 
  sharing:add <email>          # add a collaborator
  sharing:remove <email>       # remove a collaborator
