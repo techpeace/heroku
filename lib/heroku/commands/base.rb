@@ -4,7 +4,6 @@ require 'git'
 module Heroku::Command
 	class Base
       DEFAULT_HEROKU_REMOTE_NAME = "heroku"
-      HEROKU_GIT_URL = "git@heroku.com:PROJECT_NAME.git"
 
 		attr_accessor :args
 		attr_reader :autodetected_app
@@ -58,7 +57,7 @@ module Heroku::Command
             end
           end
 
-          remote_location = HEROKU_GIT_URL.sub("PROJECT_NAME", "#{@args.first}")
+          remote_location = default_git_remote_path(@args.first)
           git_repo.add_remote(DEFAULT_HEROKU_REMOTE_NAME, remote_location)
         end
 
@@ -148,6 +147,10 @@ module Heroku::Command
 		def escape(value)
 			heroku.escape(value)
 		end
+
+        def default_git_remote_path(name)
+          "git@#{heroku.host}:#{name}.git"
+        end
 	end
 
 	class BaseWithApp < Base
