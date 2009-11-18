@@ -1,11 +1,11 @@
 module Heroku::Command
-	class Help < Base
-		def index
-			display usage
-		end
+  class Help < Base
+    def index
+      display usage
+    end
 
-		def usage
-			usage = <<EOTXT
+    def usage
+      usage = <<EOTXT
 
 === General Commands
 
@@ -83,6 +83,6 @@ module Heroku::Command
  git push heroku master
 
 EOTXT
-		end
-	end
+    end
+  end
 end
